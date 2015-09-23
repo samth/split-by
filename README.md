@@ -1,0 +1,1 @@
+Like `splitBy` from Mathematica
