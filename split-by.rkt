@@ -1,6 +1,10 @@
 #lang racket/base
 
-(provide split-by)
+(require racket/contract/base)
+
+(provide
+ (contract-out
+  [split-by (-> list? (-> any/c any/c) (listof list?))]))
 
 (require racket/list)
 
