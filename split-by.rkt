@@ -4,27 +4,33 @@
 
 (require racket/list)
 
+(module+ test
+  (require rackunit
+           racket/function))
+
+
 (define (split-by l f)
   (if (null? l)
       null
-      (let loop ([groups null] [acc (list (first l))] [l (rest l)] [val (f (first l))])
-        (cond
-          [(null? l) (reverse (cons acc groups))]
-          [else
-           (define c (first l))
-           (define v (f c))
-           (if (equal? val v)
-               (loop groups (cons c acc) (rest l) val)
-               (loop (cons (reverse acc) groups) (list c) (rest l) v))]))))
+      (let-values ([(first-split rest-vs) (split-by-once l f (f (first l)))])
+        (cons first-split (split-by rest-vs f)))))
 
 (module+ test
-  (require rackunit)
 
-  (define (should-never-be-called)
-    (error "was called, shouldn't have been"))
-
-  (check-equal? (split-by '() should-never-be-called)
+  (check-equal? (split-by '() identity)
                 '())
 
   (check-equal? (split-by '(1.0 1.5 2.0 2.5 3.0) floor)
                 '((1.0 1.5) (2.0 2.5) (3.0))))
+
+
+(define (split-by-once vs f split-val)
+  (define (should-include-in-split? v)
+    (equal? (f v) split-val))
+  (splitf-at vs should-include-in-split?))
+
+(module+ test
+  (define-values (split rest-vs)
+    (split-by-once '(1.0 1.5 2.0 2.5 3.0) floor 1.0))
+  (check-equal? split '(1.0 1.5))
+  (check-equal? rest-vs '(2.0 2.5 3.0)))
